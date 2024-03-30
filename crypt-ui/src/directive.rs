@@ -87,7 +87,7 @@ pub fn decrypt(path: &str, output: Option<String>) {
         //directory
         true => {
             // get vec of dir
-            if let Ok(directory) = walk_directory(crypt_folder, false) {
+            if let Ok(directory) = walk_directory(crypt_folder, false) { 
                 for p in directory {
                     if p.is_dir() {
                         root.push(p.file_name().unwrap());
