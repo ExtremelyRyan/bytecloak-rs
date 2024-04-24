@@ -31,10 +31,6 @@ pub enum CloudError {
     /// Error accessing Crypt "root" folder
     #[error("Error accessing Crypt 'root' folder")]
     CryptFolderError,
-
-    /// Runtime error
-    #[error("Runtime error")]
-    RuntimeError,
 }
 
 ///Process the encryption directive

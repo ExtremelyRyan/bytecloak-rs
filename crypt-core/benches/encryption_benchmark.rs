@@ -6,7 +6,7 @@ use crypt_core::{
     filecrypt::{encrypt_file, FileCrypt},
     *,
 };
-use logfather::info;
+use logfather::{info, logger};
 use rand::RngCore;
 
 #[cfg(target_os = "linux")]
@@ -37,6 +37,8 @@ static SHAKESPEARE_DECRYPT: &str = "benches\\files\\Shakespeare-decrypted.txt";
 
 // encrypt test with 850kb file
 pub fn enc_benchmark(c: &mut Criterion) {
+    let mut logger = logger::new();
+    logger.terminal(false);
     c.bench_function("full file encryption (dracula.txt)", |b| {
         b.iter(|| encrypt_file(DRACULA, &None))
     });
@@ -44,6 +46,9 @@ pub fn enc_benchmark(c: &mut Criterion) {
 
 // encrypt test with 850kb file
 pub fn dracula_content_encryption(c: &mut Criterion) {
+    let mut logger = logger::new();
+    logger.terminal(false);
+
     // minumum setup needed to use encryption function
     let s = String::from("");
     let pb = PathBuf::new();
@@ -58,6 +63,9 @@ pub fn dracula_content_encryption(c: &mut Criterion) {
 
 // encrypt test with 5mb file
 pub fn shakespeare_content_encryption(c: &mut Criterion) {
+    let mut logger = logger::new();
+    logger.terminal(false);
+
     // minumum setup needed to use encryption function
     let s = String::from("");
     let pb = PathBuf::new();
@@ -72,6 +80,9 @@ pub fn shakespeare_content_encryption(c: &mut Criterion) {
 
 // encrypt test with 5mb file
 pub fn enc_benchmark_large(c: &mut Criterion) {
+    let mut logger = logger::new();
+    logger.terminal(false);
+
     c.bench_function("full file encryption (shakespeare)", |b| {
         b.iter(|| encrypt_file(SHAKESPEARE, &None))
     });
@@ -104,6 +115,9 @@ pub fn enc_benchmark_large(c: &mut Criterion) {
 
 // decrypt test with 850kb file
 pub fn dec_benchmark(c: &mut Criterion) {
+    let mut logger = logger::new();
+    logger.terminal(false);
+
     c.bench_function("decrypt dracula", |b| {
         b.iter(|| crate::filecrypt::decrypt_file(DRACULA_CRYPT, String::from("")))
     });
@@ -111,6 +125,9 @@ pub fn dec_benchmark(c: &mut Criterion) {
 
 // decrypt test with 5mb file
 pub fn dec_benchmark_large(c: &mut Criterion) {
+    let mut logger = logger::new();
+    logger.terminal(false);
+
     c.bench_function("decrypt Shakespeare", |b| {
         b.iter(|| crate::filecrypt::decrypt_file(SHAKESPEARE_CRYPT, String::from("")))
     });
@@ -118,6 +135,9 @@ pub fn dec_benchmark_large(c: &mut Criterion) {
 
 // test generating a hash
 pub fn test_compute_hash(c: &mut Criterion) {
+    let mut logger = logger::new();
+    logger.terminal(false);
+
     let contents: Vec<u8> = std::fs::read(DRACULA).unwrap();
 
     c.bench_function("computing 32-bit hash", |b| {
@@ -127,6 +147,9 @@ pub fn test_compute_hash(c: &mut Criterion) {
 
 // test generation of a 26 digit uuid
 pub fn test_generate_uuid(c: &mut Criterion) {
+    let mut logger = logger::new();
+    logger.terminal(false);
+
     c.bench_function("generate 26 digit uuid", |b| {
         b.iter(|| {
             info!("generating new uuid");
@@ -148,6 +171,9 @@ pub fn test_generate_uuid(c: &mut Criterion) {
 }
 
 pub fn test_zip(c: &mut Criterion) {
+    let mut logger = logger::new();
+    logger.terminal(false);
+
     let contents = get_vec_file_bytes(DRACULA);
     c.bench_function("zip dracula.txt", |b| {
         b.iter(|| crate::encryption::compress(contents.as_slice(), 3))
@@ -155,6 +181,9 @@ pub fn test_zip(c: &mut Criterion) {
 }
 
 pub fn test_zip_large(c: &mut Criterion) {
+    let mut logger = logger::new();
+    logger.terminal(false);
+    
     let contents = get_vec_file_bytes(SHAKESPEARE);
     c.bench_function("zip Shakespeare.txt", |b| {
         b.iter(|| crate::encryption::compress(contents.as_slice(), 3))
