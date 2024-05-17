@@ -83,7 +83,7 @@ pub async fn g_create_folder(
         None => GOOGLE_FOLDER,
     };
 
-    dbg!(&save_path);
+    // dbg!(&save_path);
 
     let query = match parent.is_empty() {
         false => {
@@ -165,7 +165,7 @@ pub async fn g_update(user_token: &UserToken, id: &str, path: &str) -> Result<St
         .await?
         .error_for_status()?;
 
-    dbg!(&response);
+    // dbg!(&response);
     let session_uri = response
         .headers()
         .get(LOCATION)
@@ -363,7 +363,7 @@ pub async fn g_walk(user_token: &UserToken, name: &str) -> Result<DirInfo> {
     }
     //Search through response and return id
     let folders = response.json::<Value>().await?;
-    dbg!(&folders);
+    // dbg!(&folders);
     for item in folders["files"].as_array().unwrap_or(&vec![]) {
         if item["name"].as_str() == Some(name) {
             if let Some(id) = item["id"].as_str() {
@@ -399,13 +399,13 @@ pub async fn google_query_folders(
 
     let resp = response.json::<Value>().await.unwrap();
 
-    dbg!(&resp);
+    // dbg!(&resp);
 
     if let Some(files) = resp.get("files").and_then(Value::as_array) {
         let folders: Vec<(String, String)> = files
             .iter()
             .filter_map(|file| {
-                dbg!(&file);
+                // dbg!(&file);
                 if let (Some(id), Some(name)) = (
                     file.get("name").and_then(Value::as_str),
                     file.get("id").and_then(Value::as_str),
@@ -444,13 +444,13 @@ pub async fn google_query(
 
     let resp = response.json::<Value>().await.unwrap();
 
-    dbg!(&resp);
+    // dbg!(&resp);
 
     if let Some(files) = resp.get("files").and_then(Value::as_array) {
         let folders: Vec<(String, String)> = files
             .iter()
             .filter_map(|file| {
-                dbg!(&file);
+                // dbg!(&file);
                 if let (Some(id), Some(name)) = (
                     file.get("name").and_then(Value::as_str),
                     file.get("id").and_then(Value::as_str),
@@ -511,7 +511,7 @@ async fn walk_cloud(
     }
 
     let files = response.json::<Value>().await?;
-    dbg!(&files);
+    // dbg!(&files);
     if let Some(array) = files["files"].as_array() {
         for item in array {
             let name = item["name"].as_str().unwrap_or_default().to_string();

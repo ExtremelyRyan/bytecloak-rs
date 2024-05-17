@@ -66,7 +66,10 @@ pub fn init(interface: Interface) {
 }
 
 fn load_logger(interface: &Interface) {
-    let mut logger = Logger::new().file(true).path(LOG_PATH.as_str());
+    let mut logger = Logger::new()
+        .terminal(false)
+        .file(true)
+        .path(LOG_PATH.as_str());
     logger.log_format("[{timestamp} {level}] {module_path}: {message}");
     // logger.log_format("[{timestamp} {level}] <cyan>{module_path}</cyan>: {message}");
     logger.timezone(logfather::TimeZone::Utc);

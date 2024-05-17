@@ -1,11 +1,11 @@
-use std::path::PathBuf;
-
+use crate::prelude::{self};
 use clap::{Parser, Subcommand};
 use crypt_cloud::crypt_core::{
     common::{get_machine_name, send_information},
     config::{self, ConfigTask, ItemsTask},
     db::import_keeper,
 };
+use std::path::PathBuf;
 
 use crate::directive::{
     self, dropbox_download, dropbox_upload, dropbox_view, google_download, google_view,
@@ -250,7 +250,7 @@ impl KeeperCommand {
 }
 
 /// Runs the CLI and returns a directive to be processed
-pub fn load_cli() {
+pub fn load_cli() -> prelude::Result<()> {
     config::init(config::Interface::CLI);
 
     // Run the cli and get responses
@@ -272,7 +272,7 @@ pub fn load_cli() {
     // }
 
     if cli.test {
-        directive::test();
+        // directive::test();
     }
 
     // Process the command passed by the user
@@ -381,14 +381,14 @@ pub fn load_cli() {
             // println!("{}", config);
         }
     }
+    Ok(())
 }
 
 fn debug_mode() {
     println!("Why would you do this ._.");
 }
 
-pub fn test() { 
-
+pub fn test() {
     // Get the current working directory
     let current_dir = std::env::current_dir().expect("Failed to get current directory");
 

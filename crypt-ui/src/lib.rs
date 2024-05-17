@@ -2,3 +2,5 @@
 pub mod cli;
 pub mod directive;
 pub mod tui;
+mod error;
+pub mod prelude;

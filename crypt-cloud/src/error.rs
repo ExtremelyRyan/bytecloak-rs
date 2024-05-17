@@ -1,6 +1,7 @@
 //! Main Crate Error
 //! 
 
+use crypt_core::error::Error as core_error;
 
 pub type Result<T> = core::result::Result<T, Error>;
 
@@ -15,4 +16,8 @@ pub enum Error {
 
     #[error(transparent)]
     IO(#[from] std::io::Error),
+
+    #[error(transparent)]
+    Core(#[from] core_error),
 }
+
