@@ -272,7 +272,7 @@ pub fn load_cli() -> prelude::Result<()> {
     // }
 
     if cli.test {
-        // directive::test();
+        directive::test();
     }
 
     // Process the command passed by the user

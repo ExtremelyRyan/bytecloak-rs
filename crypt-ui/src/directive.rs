@@ -8,6 +8,7 @@ use crypt_cloud::crypt_core::{
     common::{
         build_tree, chooser, get_crypt_folder, get_filenames_from_subdirectories,
         get_full_file_path, send_information, walk_crypt_folder, walk_directory, CommonError,
+        DirInfo, FsNode,
     },
     config::{self, Config, ConfigTask, ItemsTask},
     db::{self, delete_keeper, export_keeper, query_crypt, query_keeper_crypt},
@@ -619,119 +620,92 @@ pub fn ls(local: &bool, cloud: &bool) {
 // DANGER ZONE ===============================================
 // ===========================================================
 
-// pub fn test() {
-//     let (runtime, user_token, _crypt_folder) = match google_startup() {
-//         Ok(res) => res,
-//         Err(_) => todo!(), // TODO: do we handle this here? or do we pass back to CLI?
-//     };
-// let res = runtime.block_on(drive::g_view(&user_token, "Crypt"));
-// println!("{:#?}", res);
+#[allow(unused_variables)]
+pub fn test() {
+    let (runtime, user_token, crypt_folder) = match google_startup() {
+        Ok(res) => res,
+        Err(_) => todo!(), // TODO: do we handle this here? or do we pass back to CLI?
+    };
+    let res = runtime.block_on(drive::g_view(&user_token, "Crypt"));
+    println!("crypt: {:#?}", res);
 
-// let res = walk_directory("test_folder", false);
-// println!("{:#?}", res);
+    // let res = walk_directory("test_folder", false);
+    // println!("test_folder: {:#?}", res);
 
-// let res = runtime.block_on(drive::google_query_folders(&user_token, "testerer_folderer",&crypt_folder));
-// println!("{:#?}", res);
+    // let res = runtime.block_on(drive::google_query_folders(
+    //     &user_token,
+    //     "testerer_folderer",
+    //     &crypt_folder,
+    // ));
+    // println!("{:#?}", res);
 
-// let res = runtime.block_on(drive::google_query(&user_token, &crypt_folder));
-// println!("{:#?}", res);
-// let crypt = get_crypt_folder();
-// let (mut left, mut right) = get_filenames_from_subdirectories(crypt).unwrap();
-// left.append(&mut right);
+    // let res = runtime.block_on(drive::google_query(&user_token, &crypt_folder));
+    // println!("{:#?}", res);
+    // let crypt = get_crypt_folder();
+    // let (mut left, mut right) = get_filenames_from_subdirectories(crypt).unwrap();
+    // left.append(&mut right);
 
-// let res = chooser("");
-// println!("{:#?}", res);
+    // let res = chooser("");
+    // println!("{:#?}", res);
 
-// let _cloud_directory = runtime
-//     .block_on(drive::g_walk(&user_token, "Crypt"))
-//     .unwrap_or_else(|_| DirInfo::default());
-// // dbg!(cloud_directory);
-// example();
-// }
+    let cloud_directory = runtime
+        .block_on(drive::g_walk(&user_token, "Crypt"))
+        .unwrap_or_else(|_| DirInfo::default());
+    dbg!(&cloud_directory);
 
-// use crypt_cloud::crypt_core::common::{DirInfo, FileInfo};
+    let local_crypt_folder = get_crypt_folder();
+    traverse_directory(&cloud_directory, local_crypt_folder, &user_token, &runtime);
+}
 
-// fn _print_files(file_list: &[FileInfo]) {
-//     println!("\n#   files\tlast modified");
-//     println!("----------------------------------------------------------------");
-//     for (i, file_info) in file_list.iter().enumerate() {
-//         println!("{:<3} {}/{}", i + 1, file_info.path, file_info.name);
-//     }
-// }
+fn traverse_directory(
+    directory: &DirInfo,
+    mut path: PathBuf,
+    user_token: &UserToken,
+    runtime: &Runtime,
+) {
+    if !path.ends_with(&directory.name) || !path.eq(&PathBuf::from(get_crypt_folder())) {
+        path.push(&directory.name)
+    }
+    // Print directory information
+    println!(
+        "DirInfo: Directory: {} (path: {})",
+        directory.name, directory.path
+    );
+    println!("current path: {}", path.display());
 
-// fn _print_folders(folder_list: &[DirInfo]) {
-//     println!("\n#   folders");
-//     println!("----------------------------------------------------------------");
-//     for (i, folder_info) in folder_list.iter().enumerate() {
-//         println!("{:<3} {}", i + 1, folder_info.name);
-//     }
-// }
+    // Iterate over the contents of the directory
+    for content in &directory.contents {
+        match content {
+            FsNode::Directory(dir_info) => {
+                // check if dir exists
+                if !path.exists() {
+                    _ = std::fs::create_dir(&path);
+                }
 
-// use std::fmt;
+                // Recursively traverse the subdirectory
+                traverse_directory(dir_info, path.clone(), user_token, runtime);
 
-// #[derive(Debug)]
-// struct FInfo {
-//     name: String,
-//     id: String,
-//     parent_name: String,
-//     parent_id: String,
-//     last_modified: u64, // Assuming last modified is a Unix timestamp
-// }
+                path.pop();
+            }
+            FsNode::File(file_info) => {
+                // Print file information
+                println!("File: {} (path: {})", file_info.name, file_info.path);
 
-// impl fmt::Display for FInfo {
-//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-// //         write!(
-//             f,
-//             "Name: {}, ID: {}, Parent Name: {}, Parent ID: {}, Last Modified: {}",
-//             self.name, self.id, self.parent_name, self.parent_id, self.last_modified
-//         )
-//     }
-// }
-// #[derive(Debug)]
-// struct DInfo {
-//     name: String,
-//     id: String,
-//     parent_name: String,
-//     parent_id: String,
-//     expanded: bool,
-//     contents: Vec<Content>, // Assuming Content is an enum of FileInfo and DirInfo
-// }
+                let bytes = runtime
+                    .block_on(drive::google_query_file(&user_token, &file_info.path))
+                    .unwrap_or(vec![]);
 
-// #[derive(Debug)]
-// enum Content {
-//     File(FInfo),
-//     Directory(DInfo),
-// }
+                // TODO: if something went wrong, what do?
+                if bytes.is_empty() {
+                    send_information(vec![format!(
+                        "Failed to get contents of cloud file. Please try again."
+                    )]);
+                    std::process::exit(2);
+                }
 
-// impl fmt::Display for DInfo {
-//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-//         write!(
-//             f,
-//             "Name: {}\nID: {}\nParent Name: {}\nParent ID: {}\nExpanded: {}",
-//             self.name, self.id, self.parent_name, self.parent_id, self.expanded
-//         )
-//     }
-// }
-
-// fn example() {
-//     // Example usage
-//     let dir_info = DInfo {
-//         name: String::from("test_folder"),
-//         id: String::from("1qnOh6LuTeHojeaVwB_eKHxqaKifkZRgi"),
-//         parent_name: String::from("Crypt"),
-//         parent_id: String::from("1xhf8AefxBdmXWPg_2ixrAKzYI0D5YTXE"),
-//         expanded: true,
-//         contents: vec![
-//             Content::File(FInfo {
-//                 name: String::from("file2.crypt"),
-//                 id: String::from("1GzebIQA2c1JIa6YeDztX5_j_Z1a6Gkcu"),
-//                 parent_name: String::from("test_folder"),
-//                 parent_id: String::from("1qnOh6LuTeHojeaVwB_eKHxqaKifkZRgi"),
-//                 last_modified: 1644949500,
-//             }),
-//             // More Content entries...
-//         ],
-//     };
-
-//     println!("{}", dir_info);
-// }
+                // Step 2.5: unzip / decrypt contents / write to file.
+                // decrypt_contents(fc, bytes).unwrap();
+            }
+        }
+    }
+}
