@@ -663,14 +663,14 @@ fn traverse_directory(
     user_token: &UserToken,
     runtime: &Runtime,
 ) {
-    if !path.ends_with(&directory.name) || !path.eq(&PathBuf::from(get_crypt_folder())) {
-        path.push(&directory.name)
+    if !path.ends_with(&directory.name) {
+        path.push(&directory.name);
     }
     // Print directory information
-    println!(
-        "DirInfo: Directory: {} (path: {})",
-        directory.name, directory.path
-    );
+    // println!(
+    //     "DirInfo: Directory: {} (path: {})",
+    //     directory.name, directory.path
+    // );
     println!("current path: {}", path.display());
 
     // Iterate over the contents of the directory
@@ -679,7 +679,7 @@ fn traverse_directory(
             FsNode::Directory(dir_info) => {
                 // check if dir exists
                 if !path.exists() {
-                    _ = std::fs::create_dir(&path);
+                    _ = std::fs::create_dir_all(&path);
                 }
 
                 // Recursively traverse the subdirectory
@@ -704,6 +704,12 @@ fn traverse_directory(
                 }
 
                 // Step 2.5: unzip / decrypt contents / write to file.
+                let file = path.clone().join(&file_info.name);
+                println!("full file path: {}", file.display());
+                if !file.exists() {
+                    let res = std::fs::write(file, bytes);
+                    // dbg!(res);
+                }
                 // decrypt_contents(fc, bytes).unwrap();
             }
         }
