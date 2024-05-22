@@ -365,11 +365,13 @@ pub fn google_download(path: &str) -> Result<(), DownloadError> {
     }
     // otherwise it is a folder
     else {
-        // query google drive for folder and get all files
-
-        // iterate through files and get drive id's
-
-        // download each file.
+        let cloud_path = runtime
+            .block_on(drive::g_walk(
+                &user_token,
+                &file_choice.to_string_lossy().to_string(),
+            ))
+            .unwrap_or_else(|_| DirInfo::default());
+        traverse_directory(&cloud_path, file_choice, &user_token, &runtime, 0);
     }
 
     Ok(())
