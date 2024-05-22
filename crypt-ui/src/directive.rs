@@ -325,6 +325,8 @@ impl From<std::io::Error> for DownloadError {
     }
 }
 
+//TODO: this was originally written to only take in a local file and find it from its UUID if it was a file.
+// this can still work for individual files, but not for trying to download directories from the cloud.
 pub fn google_download(path: &str) -> Result<(), DownloadError> {
     let (runtime, user_token, _crypt_folder_id) = google_startup()?;
 
