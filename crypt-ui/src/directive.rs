@@ -651,10 +651,16 @@ pub fn test() {
     let cloud_directory = runtime
         .block_on(drive::g_walk(&user_token, "Crypt"))
         .unwrap_or_else(|_| DirInfo::default());
-    dbg!(&cloud_directory);
+    // dbg!(&cloud_directory);
 
     let local_crypt_folder = get_crypt_folder();
-    traverse_directory(&cloud_directory, local_crypt_folder, &user_token, &runtime);
+    traverse_directory(
+        &cloud_directory,
+        local_crypt_folder,
+        &user_token,
+        &runtime,
+        0,
+    );
 }
 
 fn traverse_directory(
@@ -662,55 +668,77 @@ fn traverse_directory(
     mut path: PathBuf,
     user_token: &UserToken,
     runtime: &Runtime,
+    depth: u8,
 ) {
-    if !path.ends_with(&directory.name) {
+    if !path.ends_with(&directory.name) && directory.name != "Crypt" {
         path.push(&directory.name);
     }
-    // Print directory information
-    // println!(
-    //     "DirInfo: Directory: {} (path: {})",
-    //     directory.name, directory.path
-    // );
+
+    // Log directory information
+    println!(
+        "DirInfo: Directory: {} (path: {})",
+        directory.name, directory.path
+    );
     println!("current path: {}", path.display());
 
-    // Iterate over the contents of the directory
+    // Ensure directory exists
+    if !path.exists() {
+        if let Err(e) = fs::create_dir_all(&path) {
+            eprintln!("Failed to create directory {}: {}", path.display(), e);
+            return;
+        }
+    }
+
     for content in &directory.contents {
         match content {
             FsNode::Directory(dir_info) => {
-                // check if dir exists
-                if !path.exists() {
-                    _ = std::fs::create_dir_all(&path);
-                }
-
                 // Recursively traverse the subdirectory
-                traverse_directory(dir_info, path.clone(), user_token, runtime);
-
-                path.pop();
+                traverse_directory(dir_info, path.clone(), user_token, runtime, depth + 1);
             }
             FsNode::File(file_info) => {
-                // Print file information
+                // Log file information
                 println!("File: {} (path: {})", file_info.name, file_info.path);
 
-                let bytes = runtime
+                // Fetch file contents
+                let bytes = match runtime
                     .block_on(drive::google_query_file(&user_token, &file_info.path))
-                    .unwrap_or(vec![]);
+                {
+                    Ok(bytes) => bytes,
+                    Err(e) => {
+                        eprintln!(
+                            "Failed to get contents of cloud file {}: {}",
+                            file_info.path, e
+                        );
+                        continue;
+                    }
+                };
 
-                // TODO: if something went wrong, what do?
+                // If the file is empty, log the issue and continue
                 if bytes.is_empty() {
-                    send_information(vec![format!(
-                        "Failed to get contents of cloud file. Please try again."
-                    )]);
-                    std::process::exit(2);
+                    eprintln!("Received empty file contents for {}", file_info.path);
+                    continue;
                 }
 
-                // Step 2.5: unzip / decrypt contents / write to file.
-                let file = path.clone().join(&file_info.name);
-                println!("full file path: {}", file.display());
-                if !file.exists() {
-                    let res = std::fs::write(file, bytes);
-                    // dbg!(res);
+                let mut file_path = path.join(&file_info.name);
+
+                // Ensure file path uniqueness
+                let mut counter = 1;
+                while file_path.exists() {
+                    file_path = path.join(format!(
+                        "{}_{}.{}",
+                        file_path.file_stem().unwrap().to_string_lossy().to_string(),
+                        counter,
+                        file_path.extension().unwrap().to_str().unwrap_or(".crypt")
+                    ));
+                    counter += 1;
                 }
-                // decrypt_contents(fc, bytes).unwrap();
+
+                // Write contents to the file
+                if let Err(e) = fs::write(&file_path, &bytes) {
+                    eprintln!("Failed to write file {}: {}", file_path.display(), e);
+                } else {
+                    println!("Successfully wrote file: {}", file_path.display());
+                }
             }
         }
     }
