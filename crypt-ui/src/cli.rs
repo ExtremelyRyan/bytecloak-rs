@@ -249,140 +249,140 @@ impl KeeperCommand {
     }
 }
 
-/// Runs the CLI and returns a directive to be processed
-pub fn load_cli() -> prelude::Result<()> {
-    config::init(config::Interface::CLI);
+// /// Runs the CLI and returns a directive to be processed
+// pub fn load_cli() -> prelude::Result<()> {
+//     config::init(config::Interface::CLI);
 
-    // Run the cli and get responses
-    let cli = CommandLineArgs::parse();
+//     // Run the cli and get responses
+//     let cli = CommandLineArgs::parse();
 
-    // Invoked as: `crypt --md > commands.md`
-    if cli.md {
-        clap_markdown::print_help_markdown::<CommandLineArgs>();
-    }
+//     // Invoked as: `crypt --md > commands.md`
+//     if cli.md {
+//         clap_markdown::print_help_markdown::<CommandLineArgs>();
+//     }
 
-    // If debug mode was passed
-    if cli.debug {
-        debug_mode();
-    }
+//     // If debug mode was passed
+//     if cli.debug {
+//         debug_mode();
+//     }
 
-    // Call TUI if flag was passed
-    // if cli.tui {
-    //     // load_tui().expect("failed to load TUI");
-    // }
+//     // Call TUI if flag was passed
+//     // if cli.tui {
+//     //     // load_tui().expect("failed to load TUI");
+//     // }
 
-    if cli.test {
-        directive::test();
-    }
+//     if cli.test {
+//         directive::test();
+//     }
 
-    // Process the command passed by the user
-    match &cli.command {
-        // Nothing passed (Help screen printed)
-        None => (),
+//     // Process the command passed by the user
+//     match &cli.command {
+//         // Nothing passed (Help screen printed)
+//         None => (),
 
-        // ls
-        Some(Commands::Ls { local, cloud }) => {
-            directive::ls(local, cloud);
-        }
+//         // ls
+//         Some(Commands::Ls { local, cloud }) => {
+//             directive::ls(&local, cloud);
+//         }
 
-        // Encryption
-        Some(Commands::Encrypt { path, output }) => {
-            let res = directive::encrypt(path, output.to_owned());
-            println!("encrypt result: {:?}", res);
-        }
+//         // Encryption
+//         Some(Commands::Encrypt { path, output }) => {
+//             let res = directive::encrypt(path, output.to_owned());
+//             println!("encrypt result: {:?}", res);
+//         }
 
-        // Decryption
-        Some(Commands::Decrypt { path, output }) => {
-            directive::decrypt(path, output.to_owned());
-        }
+//         // Decryption
+//         Some(Commands::Decrypt { path, output }) => {
+//             directive::decrypt(&path, output.to_owned());
+//         }
 
-        // Cloud commands - upload | download | view for Google Drive and TODO: Dropbox
-        Some(Commands::Cloud { category }) => match category {
-            // Google
-            Some(CloudCommand::Google { task }) => {
-                match task {
-                    Some(DriveCommand::Upload {}) => {
-                        let response = directive::google_upload();
-                        if let Err(e) = response {
-                            println!("error: {}", e);
-                        }
-                    }
-                    Some(DriveCommand::Download { path }) => {
-                        let response = google_download(path);
-                        if let Err(e) = response {
-                            println!("error: {}", e);
-                        }
-                    }
-                    Some(DriveCommand::View { path }) => google_view(path),
-                    None => panic!("invalid input"),
-                };
-            }
+//         // Cloud commands - upload | download | view for Google Drive and TODO: Dropbox
+//         Some(Commands::Cloud { category }) => match category {
+//             // Google
+//             Some(CloudCommand::Google { task }) => {
+//                 match task {
+//                     Some(DriveCommand::Upload {}) => {
+//                         let response = directive::google_upload();
+//                         if let Err(e) = response {
+//                             println!("error: {}", e);
+//                         }
+//                     }
+//                     Some(DriveCommand::Download { path }) => {
+//                         let response = google_download(path);
+//                         if let Err(e) = response {
+//                             println!("error: {}", e);
+//                         }
+//                     }
+//                     Some(DriveCommand::View { path }) => google_view(path),
+//                     None => panic!("invalid input"),
+//                 };
+//             }
 
-            // Dropbox
-            // TODO:
-            Some(CloudCommand::Dropbox { task }) => {
-                match task {
-                    Some(DriveCommand::Upload {}) => dropbox_upload(""),
-                    Some(DriveCommand::Download { path }) => dropbox_download(path),
-                    Some(DriveCommand::View { path }) => dropbox_view(path),
-                    None => panic!("invalid input"),
-                };
-            }
+//             // Dropbox
+//             // TODO:
+//             Some(CloudCommand::Dropbox { task }) => {
+//                 match task {
+//                     Some(DriveCommand::Upload {}) => dropbox_upload(""),
+//                     Some(DriveCommand::Download { path }) => dropbox_download(&path),
+//                     Some(DriveCommand::View { path }) => dropbox_view(&path),
+//                     None => panic!("invalid input"),
+//                 };
+//             }
 
-            None => {}
-        },
-        // Keeper
-        Some(Commands::Keeper { category }) => {
-            let kc = category.as_ref().unwrap();
-            directive::keeper(kc);
-        }
+//             None => {}
+//         },
+//         // Keeper
+//         Some(Commands::Keeper { category }) => {
+//             let kc = category.as_ref().unwrap();
+//             directive::keeper(kc);
+//         }
 
-        // Config
-        Some(Commands::Config { category }) => {
-            match category {
-                Some(ConfigCommand::DatabasePath { path }) => {
-                    directive::config(path, ConfigTask::DatabasePath);
-                }
+//         // Config
+//         Some(Commands::Config { category }) => {
+//             match category {
+//                 Some(ConfigCommand::DatabasePath { path }) => {
+//                     directive::config(&path, ConfigTask::DatabasePath);
+//                 }
 
-                Some(ConfigCommand::CryptPath { path }) => {
-                    directive::config(path, ConfigTask::CryptPath);
-                }
+//                 Some(ConfigCommand::CryptPath { path }) => {
+//                     directive::config(&path, ConfigTask::CryptPath);
+//                 }
 
-                // IgnoreItems
-                Some(ConfigCommand::IgnoreItems { add_remove, item }) => {
-                    let add_remove = match add_remove.to_lowercase().as_str() {
-                        "add" | "a" => ItemsTask::Add,
-                        "remove" | "r" => ItemsTask::Remove,
-                        _ => panic!("invalid input"),
-                    };
+//                 // IgnoreItems
+//                 Some(ConfigCommand::IgnoreItems { add_remove, item }) => {
+//                     let add_remove = match add_remove.to_lowercase().as_str() {
+//                         "add" | "a" => ItemsTask::Add,
+//                         "remove" | "r" => ItemsTask::Remove,
+//                         _ => panic!("invalid input"),
+//                     };
 
-                    directive::config("", ConfigTask::IgnoreItems(add_remove, item.to_owned()));
-                }
+//                     directive::config("", ConfigTask::IgnoreItems(add_remove, item.to_owned()));
+//                 }
 
-                // ZstdLevel
-                Some(ConfigCommand::ZstdLevel { level }) => {
-                    let level: i32 = level.parse().expect("Could not interpret passed value");
-                    directive::config("", ConfigTask::ZstdLevel(level));
-                }
+//                 // ZstdLevel
+//                 Some(ConfigCommand::ZstdLevel { level }) => {
+//                     let level: i32 = level.parse().expect("Could not interpret passed value");
+//                     directive::config("", ConfigTask::ZstdLevel(level));
+//                 }
 
-                //Hwid
-                Some(ConfigCommand::Hwid {}) => {
-                    send_information(vec![format!("machine name: {}", get_machine_name())]);
-                }
+//                 //Hwid
+//                 Some(ConfigCommand::Hwid {}) => {
+//                     send_information(vec![format!("machine name: {}", get_machine_name())]);
+//                 }
 
-                // LoadDefault
-                Some(ConfigCommand::LoadDefault) => {
-                    directive::config("", ConfigTask::LoadDefault);
-                }
+//                 // LoadDefault
+//                 Some(ConfigCommand::LoadDefault) => {
+//                     directive::config("", ConfigTask::LoadDefault);
+//                 }
 
-                None => (),
-            }
-            // let config = config::get_config();
-            // println!("{}", config);
-        }
-    }
-    Ok(())
-}
+//                 None => (),
+//             }
+//             // let config = config::get_config();
+//             // println!("{}", config);
+//         }
+//     }
+//     Ok(())
+// }
 
 fn debug_mode() {
     println!("Why would you do this ._.");

@@ -1,6 +1,4 @@
-use crypt_ui::cli::load_cli;
-fn main() -> anyhow::Result<()> {
-    let _ = load_cli();
-
-    Ok(())
+use crypt_ui::cli_builder::start_cli;
+fn main() {
+    start_cli();
 }

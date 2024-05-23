@@ -20,7 +20,7 @@ homepage = "https://thebytecrypt.com"
 repository = "https://github.com/ExtremelyRyan/ByteCrypt"
 readme = "README.md"
 keywords = ["encryption", "files"]
-categories = ["command-line-utilities", "file-encryption"]
+categories = ["command-line-utilities", "file-encryption", "filesystem"]
 license = "MIT"
 rust-version = "1.70"
 
