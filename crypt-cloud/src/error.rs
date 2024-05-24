@@ -1,5 +1,5 @@
 //! Main Crate Error
-//! 
+//!
 
 use crypt_core::error::Error as core_error;
 
@@ -20,4 +20,3 @@ pub enum Error {
     #[error(transparent)]
     Core(#[from] core_error),
 }
-

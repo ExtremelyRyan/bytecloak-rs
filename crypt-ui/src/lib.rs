@@ -1,7 +1,7 @@
 #![allow(clippy::needless_return)]
 pub mod cli;
+pub mod cli_builder;
 pub mod directive;
-pub mod tui;
 mod error;
 pub mod prelude;
-pub mod cli_builder;
+pub mod tui;

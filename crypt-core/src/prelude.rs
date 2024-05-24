@@ -12,4 +12,3 @@ pub struct W<T>(pub T);
 
 // Personal preference.
 pub use std::format as f;
-
